@@ -5,7 +5,11 @@ import re
 import statsmodels.api as sm
 import sys
 
+from .PhasePlot import PhasePlot
+
 from datetime import datetime
+from io import BytesIO
+from PIL import Image
 from statsmodels.regression.rolling import RollingOLS
 
 def calc_cumulative(df):
@@ -225,3 +229,20 @@ def exponent(rate):
 
 def factor(rate):
     return (rate+100)/100
+
+def animate_phaseplot(df, offset, outbreak, fn):
+    images=[]
+    for i in range(offset, len(df)):
+        view=df.head(i)
+        date=view.tail(1).date.values[0]
+        pp = PhasePlot(f"Daily Total (cases) vs 7-Day Projection Error (%) - {outbreak} - ({date})")
+        idx=pp.add(view, offset=offset, legend=outbreak, color="C1") # 15
+        pp.ax.set_xlim(-100,100)
+        pp.ax.set_ylim(1,1000)
+        pp.add_horizon(horizon(view.head(len(view)-7), 7), legend="Previous 7-Day horizon", color="red")
+        pp.add_horizon(horizon(view, 7), legend="Current 7-Day horizon", color="blue")
+        b=BytesIO()
+        pp.ax.figure.savefig(b, format="png")
+        images.append(Image.open(b))
+
+    images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)

@@ -2,8 +2,9 @@ import numpy as np
 
 class PhasePlot:
 
-    def __init__(self):
+    def __init__(self, title):
         self.ax = None
+        self.title = title
         self.frames = []
         self.legend = []
         self.colors = []
@@ -24,7 +25,7 @@ class PhasePlot:
         slice = df[df.index>=offset].copy()
         slice.loc[slice['total']==0,'total']=1
         if len(self.frames) == 0:
-            self.ax = slice.plot(x='err', y='total', figsize=(16,10), color=color)
+            self.ax = slice.plot(x='err', y='total', figsize=(16,10), color=color, title=self.title)
             self.ax.set_yscale('log')
             self.ax.set_xlabel("Modeling Error %")
             self.ax.set_ylabel("New Cases")
@@ -37,6 +38,15 @@ class PhasePlot:
         self.legend.append(legend)
         self.ax.legend(self.legend)
         self.ax.scatter(x=slice.err, y=slice.total, color=color)
+        return len(self.frames)-1
+
+    def add_horizon(self, horizon_df, legend, color="black", linestyle="dashed"):
+        self.ax.plot(horizon_df["err"], horizon_df["total"], linestyle=linestyle, color=color)
+        self.frames.append(horizon_df)
+        self.colors.append(color)
+        self.legend.append(legend)
+        self.ax.legend(self.legend)
+        self.reset_dimensions()
         return len(self.frames)-1
 
     def add_label(self, index, date, text):
