@@ -7,7 +7,7 @@ import sys
 
 from .PhasePlot import PhasePlot
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 from statsmodels.regression.rolling import RollingOLS
@@ -233,7 +233,7 @@ def factor(rate):
 def animate_phaseplot(df, offset, outbreak, fn):
     images=[]
     for i in range(offset, len(df)):
-        view=df.head(i)
+        view=df.head(i+1)
         date=view.tail(1).date.values[0]
         pp = PhasePlot(f"Daily Total (cases) vs 7-Day Projection Error (%) - {outbreak} - ({date})")
         idx=pp.add(view, offset=offset, legend=outbreak, color="C1") # 15
@@ -246,3 +246,9 @@ def animate_phaseplot(df, offset, outbreak, fn):
         images.append(Image.open(b))
 
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
+
+
+DATE_FORMAT="%Y-%m-%d"
+def add_days(date, days):
+    return (datetime.strptime(date, DATE_FORMAT)+timedelta(days=days)).strftime(DATE_FORMAT)
+
