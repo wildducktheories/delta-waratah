@@ -252,3 +252,14 @@ DATE_FORMAT="%Y-%m-%d"
 def add_days(date, days):
     return (datetime.strptime(date, DATE_FORMAT)+timedelta(days=days)).strftime(DATE_FORMAT)
 
+def animate_derivatives(df, outbreak, fn, decay_rate):
+    images=[]
+    for x in range(5, len(df)):
+        df1=select_outbreak(project_ols_growth_rate_min(df.head(x), 150-x, decay_rate))
+        date=df.head(x).tail(1)['date'].values[0]
+        ax=plot_derivatives(df1, x, f"{outbreak} ({date})")
+        b=BytesIO()
+        ax.figure.savefig(b, format="png")
+        images.append(Image.open(b))
+
+    images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
