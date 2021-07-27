@@ -2,13 +2,13 @@
 
 A Python library and notebook used to explore the state of the current COVID-19 outbreak that started in Sydney on June 17, 2021.
 
-![hedgehog plot](archive/tpday/hedgehog.png)
+![hedgehog plot](archive/2021-07-27/hedgehog.png)
 
-![hedgehog animation sydney](archive/today/animated-hedgehog-sydney2021.gif)
+![hedgehog animation sydney](archive/2021-07-27/animated-hedgehog-sydney2021.gif)
 
-![hedgehog animation melbourne](archive/today/animated-hedgehog-melbourne2020.gif)
+![hedgehog animation melbourne](archive/2021-07-27/animated-hedgehog-melbourne2020.gif)
 
-![derivatives sydney](archive/today/derivatives-sydney.gif)
+![derivatives sydney](archive/2021-07-27/derivatives-sydney.gif)
 
 For more information see the [notebook](sydney-outbreaks.ipynb).
 
