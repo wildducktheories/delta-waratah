@@ -254,12 +254,15 @@ def add_days(date, days):
 
 def animate_derivatives(df, outbreak, fn, decay_rate):
     images=[]
-    for x in range(5, len(df)):
+    for x in range(5, len(df)+1):
         df1=select_outbreak(project_ols_growth_rate_min(df.head(x), 150-x, decay_rate))
         date=df.head(x).tail(1)['date'].values[0]
         ax=plot_derivatives(df1, x, f"{outbreak} ({date})")
         b=BytesIO()
         ax.figure.savefig(b, format="png")
         images.append(Image.open(b))
+
+    for i in range(0, 10):
+        images.append(images[-1])
 
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
