@@ -6,7 +6,7 @@ A Python library and notebook used to explore the state of the current COVID-19 
 
 ![hedgehog animation sydney](archive/2021-07-27/animated-hedgehog-sydney2021.gif)
 
-![hedgehog animation melbourne](archive/2021-07-26/animated-hedgehog-melbourne2020.gif)
+![hedgehog animation melbourne](archive/2021-07-27/animated-hedgehog-melbourne2020.gif)
 
 ![derivatives sydney](archive/2021-07-27/derivatives-sydney.gif)
 
