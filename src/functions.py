@@ -34,7 +34,7 @@ def select_outbreak(df, generation_days=5):
     subset_df['ols-growth-rate-min'] = subset_df['ols-growth-rate'].rolling(generation_days, min_periods=1).min()
     subset_df['ols-growth-rate-max'] = subset_df['ols-growth-rate'].rolling(generation_days, min_periods=1).max()
 
-    endog=np.log((100+subset_df['ols-growth-rate'])/100)
+    endog=np.log(subset_df['ols-growth-rate'])
     exog=sm.add_constant(subset_df.index)
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
     subset_df['ols-growth-rate-decay']=((np.exp(model.fit().params['x1'])-1)*100)
