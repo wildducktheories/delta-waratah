@@ -245,6 +245,9 @@ def animate_phaseplot(df, offset, outbreak, fn):
         pp.ax.figure.savefig(b, format="png")
         images.append(Image.open(b))
 
+    for i in range(0, 10):
+        images.append(images[-1])
+
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
 
 
