@@ -2,15 +2,17 @@
 
 A Python library and notebook used to explore the state of the current COVID-19 outbreak that started in Sydney on June 17, 2021.
 
-![hedgehog plot](archive/2021-07-28/hedgehog.png)
+![hedgehog plot](https://jonseymour.s3.amazonaws.com/delta-waratah/archive/latest/hedgehog.png)
 
-![hedgehog animation sydney](archive/2021-07-27/animated-hedgehog-sydney2021.gif)
+![hedgehog animation sydney](https://jonseymour.s3.amazonaws.com/delta-waratah/archive/latest/animated-hedgehog-sydney2021.gif)
 
-![hedgehog animation melbourne](archive/2021-07-28/animated-hedgehog-melbourne2020.gif)
+For the Melbourne animation, open this link: https://jonseymour.s3.amazonaws.com/delta-waratah/archive/latest/animated-hedgehog-melbourne2020.gif
 
-![derivatives sydney](archive/2021-07-28/animated-derivatives-sydney.gif)
+![derivatives sydney](https://jonseymour.s3.amazonaws.com/delta-waratah/archive/latest/animated-derivatives-sydney.gif)
 
-![derivatives melbourne](archive/2021-07-27/derivatives-melbourne.gif)
+For the Melbourne animation, open this link: https://jonseymour.s3.amazonaws.com/delta-waratah/archive/latest/animated-derivatives-melbourne.gif
+
+For a complete set of visusalations including the derivations, see [a snapshot of the notebook output](https://jonseymour.s3.amazonaws.com/delta-waratah/archive/latest/sydney-outbreaks.html).
 
 For more information see the [notebook](sydney-outbreaks.ipynb).
 
