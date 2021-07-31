@@ -11,7 +11,7 @@ class PhasePlot:
 
     def reset_dimensions(self):
         self.ax.vlines(0,1, np.max([df['total'].max() for df in self.frames])*1.2, linestyles='dashed', color="black")
-        err_max = np.max([ np.max(np.abs(df[df['err'].isna() == False]['err'])) for df in self.frames])*1.1
+        err_max = np.max([ np.max(np.abs(df[df['7-day-projection-relative-error'].isna() == False]['7-day-projection-relative-error'])) for df in self.frames])*1.1
         self.err_max = err_max
         self.ax.set_xbound(-100, 100)
         self.annotations_x = err_max*1.1
@@ -25,23 +25,23 @@ class PhasePlot:
         slice = df[df.index>=offset].copy()
         slice.loc[slice['total']==0,'total']=1
         if len(self.frames) == 0:
-            self.ax = slice.plot(x='err', y='total', figsize=(16,10), color=color, title=self.title)
+            self.ax = slice.plot(x='7-day-projection-relative-error', y='total', figsize=(16,10), color=color, title=self.title)
             self.ax.set_yscale('log')
             self.ax.set_xlabel("Modeling Error %")
             self.ax.set_ylabel("New Cases")
         else:
-            self.ax.plot(slice['err'], slice['total'], color=color)
+            self.ax.plot(slice['7-day-projection-relative-error'], slice['total'], color=color)
 
         self.frames.append(slice)
         self.colors.append(color)
         self.reset_dimensions()
         self.legend.append(legend)
         self.ax.legend(self.legend)
-        self.ax.scatter(x=slice.err, y=slice.total, color=color)
+        self.ax.scatter(x=slice["7-day-projection-relative-error"], y=slice.total, color=color)
         return len(self.frames)-1
 
     def add_horizon(self, horizon_df, legend, color="black", linestyle="dashed"):
-        self.ax.plot(horizon_df["err"], horizon_df["total"], linestyle=linestyle, color=color)
+        self.ax.plot(horizon_df["7-day-projection-relative-error"], horizon_df["total"], linestyle=linestyle, color=color)
         self.frames.append(horizon_df)
         self.colors.append(color)
         self.legend.append(legend)
@@ -52,7 +52,7 @@ class PhasePlot:
     def add_label(self, index, date, text):
         df = self.frames[index]
 
-        rec = df.loc[df["date"]==date, ["err", "total", "cumulative"]]
+        rec = df.loc[df["date"]==date, ["7-day-projection-relative-error", "total", "cumulative"]]
         err, total, cumulative = rec.values[0]
         self.add_xy_label(
             index,

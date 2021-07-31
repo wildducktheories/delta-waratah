@@ -12,6 +12,16 @@ from io import BytesIO
 from PIL import Image
 from statsmodels.regression.rolling import RollingOLS
 
+def append_recent_date(df, date, local):
+    return calc_cumulative(
+        df.append({
+            "date": date,
+            "local": local,
+            "unknown": 0,
+            "under-investigation": 0,
+            "local-hq": 0
+        }, ignore_index=True))
+
 def calc_cumulative(df):
     df['total']=df['local']+df['unknown']+df['under-investigation']+df['local-hq']
     df['cumulative'] = df['total'].cumsum()
@@ -40,9 +50,10 @@ def select_outbreak(df, generation_days=5):
     subset_df['ols-growth-rate-decay']=((np.exp(model.fit().params['x1'])-1)*100)
 
     shift_df=subset_df.shift(1)
-    subset_df['one-day-error']=subset_df['cumulative']-np.round(shift_df['cumulative']*((shift_df['ols-growth-rate']+100)/100))
     subset_df['one-day-projection-cumulative']=np.round(subset_df['cumulative']*((subset_df['ols-growth-rate']+100)/100))
     subset_df['one-day-projection-total']=subset_df['one-day-projection-cumulative']-subset_df['cumulative']
+    subset_df['one-day-error']=np.round(shift_df['cumulative']*((shift_df['ols-growth-rate']+100)/100)-subset_df['cumulative'])
+    subset_df["one-day-relative-error"] = subset_df["one-day-error"]/subset_df["total"]*100
 
 
     subset_df['median']=(((subset_df['ols-growth-rate-median']+100)/100)**7*subset_df['cumulative']).shift(7)
@@ -50,7 +61,12 @@ def select_outbreak(df, generation_days=5):
     subset_df['max']=(((subset_df['ols-growth-rate-max']+100)/100)**7*subset_df['cumulative']).shift(7)
     subset_df['last']=(((subset_df['ols-growth-rate']+100)/100)**7*subset_df['cumulative']).shift(7)
 
-    subset_df["err"] = modeling_errors(subset_df, None)
+    subset_df["7-day-delta"] = subset_df["cumulative"]-subset_df["cumulative"].shift(7)
+    subset_df["7-day-projection"] = np.round(subset_df["min"])
+    subset_df["7-day-projection-relative-error"] = modeling_errors(subset_df, None)
+    subset_df["7-day-projection-error"] = subset_df["7-day-projection"]-subset_df['cumulative']
+
+
     return subset_df
 
 
@@ -74,7 +90,7 @@ def amnesic_growth(rate=1.5, days=100, window_size=14):
         yield d, total, cumulative, population, prev_population, old_population
 
 def modeling_errors(df, clip=None):
-    err = (df['min']-df['cumulative'])/(df['cumulative']-df['cumulative'].shift(7))*100
+    err = (df['7-day-projection']-df['cumulative'])/(df['7-day-delta'])*100
     if clip:
         return err.apply(lambda v: clip if v > clip else v)
     else:
@@ -143,9 +159,9 @@ def horizon(df, days, steps=100):
 
     df = pd.DataFrame(
         index=range(0,steps),
-        columns=["ols-growth-rate", "cumulative", "err", "total"],
+        columns=["ols-growth-rate", "cumulative", "7-day-projection-relative-error", "total"],
         data=tuples)
-    return df[np.abs(df["err"])<=100]
+    return df[np.abs(df["7-day-projection-relative-error"])<=100]
 
 
 def plot_derivatives(df, split=None, dataset="???"):
