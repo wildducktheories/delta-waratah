@@ -25,7 +25,17 @@ def append_recent_date(df, date, local):
 def calc_cumulative(df):
     df['total']=df['local']+df['unknown']+df['under-investigation']+df['local-hq']
     df['cumulative'] = df['total'].cumsum()
+    calculate_ltlc_params(df)
     return df
+
+def calculate_ltlc_params(df2, window=14):
+    df=df2[df2.total != 0]
+    endog=np.log(df['total'])
+    exog=sm.add_constant(np.log(df['cumulative']))
+    model = RollingOLS(endog=endog, exog=exog, window=window, min_nobs=window)
+    params=model.fit().params
+    df2.loc[params.index, "ltlc-intercept"] = params["const"]
+    df2.loc[params.index, "ltlc-gradient"] = params["cumulative"]
 
 def select_outbreak(df, generation_days=5):
     subset_df = df.copy().reset_index(drop=True)

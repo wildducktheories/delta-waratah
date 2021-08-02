@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from .functions import calc_cumulative
+from .functions import calc_cumulative, calculate_ltlc_params
 
 def load_data(fn):
     df=pd.read_csv(fn).rename({
@@ -54,6 +54,7 @@ def load_vic_data(fn):
 
     df['total']=df['local']+df['unknown']+df['under-investigation']
     df['cumulative'] = df['total'].cumsum()
+    calculate_ltlc_params(df),
     return df
 
 def edit_dates(df):
