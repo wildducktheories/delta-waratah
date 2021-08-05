@@ -25,7 +25,6 @@ def append_recent_date(df, date, local):
 def calc_cumulative(df):
     df['total']=df['local']+df['unknown']+df['under-investigation']+df['local-hq']
     df['cumulative'] = df['total'].cumsum()
-    calculate_ltlc_params(df)
     return df
 
 def calculate_ltlc_params(df2, window=14):
@@ -76,6 +75,7 @@ def select_outbreak(df, generation_days=5):
     subset_df["7-day-projection-relative-error"] = modeling_errors(subset_df, None)
     subset_df["7-day-projection-error"] = subset_df["7-day-projection"]-subset_df['cumulative']
 
+    calculate_ltlc_params(subset_df)
 
     return subset_df
 
@@ -293,5 +293,57 @@ def animate_derivatives(df, outbreak, fn, decay_rate):
 
     for i in range(0, 10):
         images.append(images[-1])
+
+    images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
+
+def plot_log_log_trend(ax, df, color, max_bounds, index):
+    fit=pd.DataFrame()
+    fit["cumulative"]=[r for r in range(1, max_bounds[0], int(max_bounds[0]/100))]
+    coeffs=(df.tail(1)[['ltlc-intercept', 'ltlc-gradient']].values[0])
+    fit["total"]=np.exp((coeffs[1]*np.log(fit["cumulative"]))+coeffs[0])
+    ax.plot(fit["cumulative"], fit["total"], linestyle="dashed", color=color)
+    legends = [t.get_text() for t in ax.get_legend().get_texts()]
+    legends[index] = f"{legends[index]} - ltlc-gradient={round(coeffs[1],3)}"
+    ax.legend(legends)
+    slice=df[df.index > df.index.max()-14]
+    ax.scatter(slice['cumulative'], slice['total'])
+
+    return ax
+
+
+def plot_log_log_day(day, vic, syd):
+    max_bounds=(vic['cumulative'].max(),vic['total'].max())
+    slice = syd[syd.index <= day]
+    future = syd[syd.index > day]
+    vic_slice=vic[vic.index <= day]
+    vic_future=vic[vic.index > day]
+
+    ax=slice.plot(x="cumulative", y="total", figsize=(10,10))
+    ax.plot(vic_slice["cumulative"], vic_slice["total"])
+
+    ax.plot(future["cumulative"], future["total"], color="C0", linestyle="dotted")
+    ax.plot(vic_future["cumulative"], vic_future["total"], color="C1", linestyle="dotted")
+
+    _=ax.legend([ "Sydney 2021", "Melbourne 2020"])
+
+    ax.set_title(f"log(total) vs log(cumulative) - day {day}")
+    ax.set_ylabel("Daily New Cases (t)")
+    ax.set_xlabel("Cumulative Cases (c)")
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_ylim(top=max_bounds[1])
+
+    plot_log_log_trend(ax, syd[syd.index<=day], color="C0", max_bounds=max_bounds, index=0)
+    plot_log_log_trend(ax, vic[vic.index<=day], color="C1", max_bounds=max_bounds, index=1)
+
+    return ax
+
+def animate_log_log_plot(vic, syd, fn):
+    images=[]
+    for i in range(15, vic.index.max()+1):
+        ax=plot_log_log_day(i, vic, syd)
+        b=BytesIO()
+        ax.figure.savefig(b, format="png")
+        images.append(Image.open(b))
 
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
