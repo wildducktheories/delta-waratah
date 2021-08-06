@@ -347,3 +347,77 @@ def animate_log_log_plot(vic, syd, fn):
         images.append(Image.open(b))
 
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
+
+def summary(df):
+    def percentage_delta(df):
+        shift=df.shift(1)
+        return np.round((df - shift)/shift*100,2)
+
+
+    def delta(df):
+        shift=df.shift(1)
+        return np.round((df - shift),3)
+
+    arrow=lambda v : "↑" if v > 0 else "↓" if v < 0 else "-"
+    f=lambda v: f"{arrow(v)}Δ {v}"
+    g=lambda v: f'<span class="good">{f(v)}</span>' if v < 0 else f'<span class="bad">{f(v)}</span>'
+    gg=lambda v: f'<span class="good">{v}</span>' if v < 0 else f'<span class="bad">{v}</span>'
+    h=lambda v: f'<span class="bad">{f(v)}</span>' if v < 0 else f'<span class="good">{f(v)}</span>'
+    hh=lambda v: f'<span class="bad">{v}</span>' if v < 0 else f'<span class="good">{v}</span>'
+
+    columns=[
+        "cumulative",
+        "total",
+        "one-day-error",
+        "ols-growth-rate",
+        "ols-growth-rate-decay",
+        "doubling-period",
+        "Reff",
+        "ltlc-gradient",
+        "one-day-projection-total"
+    ]
+
+    stats=df[columns].tail(1)
+    delta=delta(df[columns]).tail(1)
+    percentage_delta(df[columns]).tail(1)
+    delta_symbol=("Δ")
+
+    slice=df[(df.date >= '2021-07-02')]
+    gp0=derive_growth_params(slice[slice.index < slice.tail(1).index.values[0]])
+    decay_rate0=(gp0[1]-1)*100
+    gp1=derive_growth_params(slice)
+    decay_rate1=(gp1[1]-1)*100
+
+    constant_total_growth_rate = ((df.tail(1)["cumulative"].values[0]+df.tail(1)["total"].values[0])/df.tail(1)["cumulative"].values[0]-1)*100
+
+    summary="""
+    <style>
+        span.good {
+            color: green;
+        }
+        span.bad {
+            color: red;
+        }
+    </style>
+    """+f"""
+    <h1>Summary</h1>
+    <br/>
+    <pre>
+    Projection (from yesterday): {round(df.tail(2).head(1)["one-day-projection-total"].values[0])}
+    Projection Error: {round(df.tail(1)["one-day-error"].values[0])} ({hh(round(df.tail(1)["one-day-relative-error"].values[0],1))}%)
+
+    Cumulative Reported Today: {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
+    New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
+
+    Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],1)}% per day {g(delta["ols-growth-rate"].values[0])}
+    Constant New Cases Growth Rate : {round(constant_total_growth_rate,2)}%
+    Reff: {round(df.tail(1)["Reff"].values[0],2)} {g(delta["Reff"].values[0])}
+    Doubling Period:  {round(df.tail(1)["doubling-period"].values[0],1)} days {h(delta["doubling-period"].values[0])}
+
+    Growth Decay Rate: {round(decay_rate1, 2)}% per day {h(round(decay_rate1 - decay_rate0, 2))}
+    ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
+
+    Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
+    </pre>
+    """
+    return summary
