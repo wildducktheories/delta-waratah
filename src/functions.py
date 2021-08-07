@@ -36,48 +36,53 @@ def calculate_ltlc_params(df2, window=14):
     df2.loc[params.index, "ltlc-intercept"] = params["const"]
     df2.loc[params.index, "ltlc-gradient"] = params["cumulative"]
 
-def select_outbreak(df, generation_days=5):
-    subset_df = df.copy().reset_index(drop=True)
-    start_total, start_cumulative = subset_df[['total', 'cumulative']].head(1).values[0]
-    subset_df['cumulative'] = subset_df['cumulative'] - start_cumulative + start_total
+def select_outbreak(df_in, generation_days=5):
+    df = df_in.copy().reset_index(drop=True)
+    start_total, start_cumulative = df[['total', 'cumulative']].head(1).values[0]
+    df['cumulative'] = df['cumulative'] - start_cumulative + start_total
 
-    endog=np.log(subset_df['cumulative'])
-    exog=sm.add_constant(subset_df.index)
+    endog=np.log(df['cumulative'])
+    exog=sm.add_constant(df.index)
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
-    subset_df['ols-growth-rate']=((np.exp(model.fit().params['x1'])-1)*100)
-    subset_df['ratio-growth-rate']=((subset_df['cumulative']/subset_df['cumulative'].shift(generation_days))**(1/generation_days)-1)*100
-    subset_df['Reff'] = ((subset_df['ols-growth-rate']+100)/100)**generation_days
-    subset_df['doubling-period'] = np.log(2)/np.log(((subset_df['ols-growth-rate']+100)/100))
+    df['ols-growth-rate']=((np.exp(model.fit().params['x1'])-1)*100)
+    df['ratio-growth-rate']=((df['cumulative']/df['cumulative'].shift(generation_days))**(1/generation_days)-1)*100
+    df['Reff'] = ((df['ols-growth-rate']+100)/100)**generation_days
+    df['doubling-period'] = np.log(2)/np.log(((df['ols-growth-rate']+100)/100))
 
-    subset_df['ols-growth-rate-median'] = subset_df['ols-growth-rate'].rolling(generation_days, min_periods=1).median()
-    subset_df['ols-growth-rate-min'] = subset_df['ols-growth-rate'].rolling(generation_days, min_periods=1).min()
-    subset_df['ols-growth-rate-max'] = subset_df['ols-growth-rate'].rolling(generation_days, min_periods=1).max()
+    df['ols-growth-rate-median'] = df['ols-growth-rate'].rolling(generation_days, min_periods=1).median()
+    df['ols-growth-rate-min'] = df['ols-growth-rate'].rolling(generation_days, min_periods=1).min()
+    df['ols-growth-rate-max'] = df['ols-growth-rate'].rolling(generation_days, min_periods=1).max()
+    df['linear-growth-rate'] = (df['total']/df['cumulative']*100)
+    df['linear-growth-rate-max'] = df['linear-growth-rate'].rolling(window=5).max()
+    df['linear-growth-rate-min'] = df['linear-growth-rate'].rolling(window=5).min()
+    df['linear-growth-rate-mean'] = df['linear-growth-rate'].rolling(window=5).mean()
+    df['linear-growth-rate-relative-error'] = ((df['linear-growth-rate']-df['ols-growth-rate'])/df['ols-growth-rate'])*100
 
-    endog=np.log(subset_df['ols-growth-rate'])
-    exog=sm.add_constant(subset_df.index)
+    endog=np.log(df['ols-growth-rate'])
+    exog=sm.add_constant(df.index)
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
-    subset_df['ols-growth-rate-decay']=((np.exp(model.fit().params['x1'])-1)*100)
+    df['ols-growth-rate-decay']=((np.exp(model.fit().params['x1'])-1)*100)
 
-    shift_df=subset_df.shift(1)
-    subset_df['one-day-projection-cumulative']=np.round(subset_df['cumulative']*((subset_df['ols-growth-rate']+100)/100))
-    subset_df['one-day-projection-total']=subset_df['one-day-projection-cumulative']-subset_df['cumulative']
-    subset_df['one-day-error']=np.round(shift_df['cumulative']*((shift_df['ols-growth-rate']+100)/100)-subset_df['cumulative'])
-    subset_df["one-day-relative-error"] = subset_df["one-day-error"]/subset_df["total"]*100
+    shift_df=df.shift(1)
+    df['one-day-projection-cumulative']=np.round(df['cumulative']*((df['ols-growth-rate']+100)/100))
+    df['one-day-projection-total']=df['one-day-projection-cumulative']-df['cumulative']
+    df['one-day-error']=np.round(shift_df['cumulative']*((shift_df['ols-growth-rate']+100)/100)-df['cumulative'])
+    df["one-day-relative-error"] = df["one-day-error"]/df["total"]*100
 
 
-    subset_df['median']=(((subset_df['ols-growth-rate-median']+100)/100)**7*subset_df['cumulative']).shift(7)
-    subset_df['min']=(((subset_df['ols-growth-rate-min']+100)/100)**7*subset_df['cumulative']).shift(7)
-    subset_df['max']=(((subset_df['ols-growth-rate-max']+100)/100)**7*subset_df['cumulative']).shift(7)
-    subset_df['last']=(((subset_df['ols-growth-rate']+100)/100)**7*subset_df['cumulative']).shift(7)
+    df['median']=(((df['ols-growth-rate-median']+100)/100)**7*df['cumulative']).shift(7)
+    df['min']=(((df['ols-growth-rate-min']+100)/100)**7*df['cumulative']).shift(7)
+    df['max']=(((df['ols-growth-rate-max']+100)/100)**7*df['cumulative']).shift(7)
+    df['last']=(((df['ols-growth-rate']+100)/100)**7*df['cumulative']).shift(7)
 
-    subset_df["7-day-delta"] = subset_df["cumulative"]-subset_df["cumulative"].shift(7)
-    subset_df["7-day-projection"] = np.round(subset_df["min"])
-    subset_df["7-day-projection-relative-error"] = modeling_errors(subset_df, None)
-    subset_df["7-day-projection-error"] = subset_df["7-day-projection"]-subset_df['cumulative']
+    df["7-day-delta"] = df["cumulative"]-df["cumulative"].shift(7)
+    df["7-day-projection"] = np.round(df["min"])
+    df["7-day-projection-relative-error"] = modeling_errors(df, None)
+    df["7-day-projection-error"] = df["7-day-projection"]-df['cumulative']
 
-    calculate_ltlc_params(subset_df)
+    calculate_ltlc_params(df)
 
-    return subset_df
+    return df
 
 
 def amnesic_growth(rate=1.5, days=100, window_size=14):
@@ -374,7 +379,8 @@ def summary(df):
         "doubling-period",
         "Reff",
         "ltlc-gradient",
-        "one-day-projection-total"
+        "one-day-projection-total",
+        "linear-growth-rate"
     ]
 
     stats=df[columns].tail(1)
@@ -387,8 +393,6 @@ def summary(df):
     decay_rate0=(gp0[1]-1)*100
     gp1=derive_growth_params(slice)
     decay_rate1=(gp1[1]-1)*100
-
-    constant_total_growth_rate = ((df.tail(1)["cumulative"].values[0]+df.tail(1)["total"].values[0])/df.tail(1)["cumulative"].values[0]-1)*100
 
     summary="""
     <style>
@@ -410,7 +414,7 @@ def summary(df):
     New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
 
     Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],1)}% per day {g(delta["ols-growth-rate"].values[0])}
-    Constant New Cases Growth Rate : {round(constant_total_growth_rate,2)}%
+    Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],1)}% per day {g(delta["linear-growth-rate"].values[0])}
     Reff: {round(df.tail(1)["Reff"].values[0],2)} {g(delta["Reff"].values[0])}
     Doubling Period:  {round(df.tail(1)["doubling-period"].values[0],1)} days {h(delta["doubling-period"].values[0])}
 
@@ -421,3 +425,16 @@ def summary(df):
     </pre>
     """
     return summary
+
+def plot_linear_growth(df):
+    ax=df[["ols-growth-rate", 'linear-growth-rate', "linear-growth-rate-max", "linear-growth-rate-min", "linear-growth-rate-mean"]][df["linear-growth-rate-max"]<40].plot(figsize=(10,10))
+    ax.grid()
+    return ax
+
+def plot_linear_growth_error(df):
+    ax=(df["linear-growth-rate-relative-error"]).rolling(window=5).max().plot(figsize=(10,10))
+    ax.plot((df["linear-growth-rate-relative-error"]).rolling(window=5).min())
+    ax.plot(df["linear-growth-rate-relative-error"])
+    ax.plot(df["linear-growth-rate-relative-error"].cumsum()/(df.index+1))
+    ax.grid()
+    return ax

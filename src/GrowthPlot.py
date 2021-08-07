@@ -12,7 +12,7 @@ class GrowthPlot:
         slice = df[df.index>=offset].copy()
         if len(self.frames) == 0:
             self.ax = slice['ols-growth-rate'].plot(title=f"Daily Cumulative Growth % ({self.date})", figsize=(10,10), color=color)
-            self.ax.set_xlabel("Days Since 1st Case")
+            self.ax.set_xlabel("Day Of Outbreak")
             self.ax.set_ylabel("Daily Cumulative Growth %")
             self.ax.set_yticks(range(0,110,10))
 #            self.ax.text(80,101, "Based on OLS regression of observed 5-day growth")
