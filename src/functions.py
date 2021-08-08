@@ -418,7 +418,7 @@ def summary(df):
     Reff: {round(df.tail(1)["Reff"].values[0],2)} {g(delta["Reff"].values[0])}
     Doubling Period:  {round(df.tail(1)["doubling-period"].values[0],1)} days {h(delta["doubling-period"].values[0])}
 
-    Growth Decay Rate: {round(decay_rate1, 2)}% per day {h(round(decay_rate1 - decay_rate0, 2))}
+    Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
     ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
 
     Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
