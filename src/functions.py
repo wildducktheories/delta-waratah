@@ -61,7 +61,7 @@ def select_outbreak(df_in, generation_days=5):
     endog=np.log(df['ols-growth-rate'])
     exog=sm.add_constant(df.index)
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
-    df['ols-growth-rate-decay']=((np.exp(model.fit().params['x1'])-1)*100)
+    df['ols-growth-rate-decay']=rate(np.exp(model.fit().params['x1']))
 
     shift_df=df.shift(1)
     df['one-day-projection-cumulative']=np.round(df['cumulative']*((df['ols-growth-rate']+100)/100))
@@ -116,7 +116,7 @@ def derive_growth_params(df, generation_days=5):
     exog=sm.add_constant(df.index)
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
     params=np.exp(model.fit().params.mean())
-    return (params["const"], params["x1"])
+    return (params["const"], rate(params["x1"]))
 
 
 def project_cumulative(df, days, rate):
@@ -138,8 +138,8 @@ def project_ols_growth_rate_min(df, days, growth_decay_rate):
 
     tuples = []
     for d in range(1, days+1):
-        ols_growth_rate = ols_growth_rate*growth_decay_rate
-        cumulative = cumulative * (ols_growth_rate+100)/100
+        cumulative = cumulative * factor(ols_growth_rate)
+        ols_growth_rate = ols_growth_rate * factor(growth_decay_rate)
         tuples.append(np.array([cumulative]))
 
     df = df.reindex(range(0, index+days+1))
@@ -262,7 +262,7 @@ def factor(rate):
     return (rate+100)/100
 
 def rate(factor):
-    return (100+factor)/100
+    return (factor-1)*100
 
 def animate_phaseplot(df, offset, outbreak, fn):
     images=[]
@@ -393,9 +393,9 @@ def summary(df):
 
     slice=df[(df.date >= '2021-07-02')]
     gp0=derive_growth_params(slice[slice.index < slice.tail(1).index.values[0]])
-    decay_rate0=(gp0[1]-1)*100
+    decay_rate0=gp0[1]
     gp1=derive_growth_params(slice)
-    decay_rate1=(gp1[1]-1)*100
+    decay_rate1=gp1[1]
 
     summary="""
     <style>
