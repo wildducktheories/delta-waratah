@@ -442,29 +442,33 @@ def plot_linear_growth_error(df):
     ax.grid()
     return ax
 
-def plot_decay_rate_estimates(df, outbreak="Sydney 2021"):
-    legends=[]
-    D=0
-    s=None
-    for N in range(7,29,7):
+def plot_decay_rate_estimates(df, outbreak="Sydney 2021", step=1):
+    legends,W,s=[],0,None
+    for N in range(7,29,step):
         shifted_df=df.shift(N)
         p=((df["ols-growth-rate"]/shifted_df["ols-growth-rate"])**(1/N)-1)*100
-        m=N
-        s=s+(p*m) if s is not None else p
-        D += m
+        w=N
+        s=s+(p*w) if s is not None else p
+        W += w
         ax=p.plot(figsize=(10,10))
         legends.append(f"period={N} days")
+
+    S=s/W
+    S.plot(color="black", linewidth=3)
+
     ax.legend(legends)
-    (s/D).plot(color="black", linewidth=3)
     ax.grid()
     ax.set_title(f"Decay Rate Estimates - {outbreak}")
     ax.set_xlabel("Day of Outbreak")
     ax.set_ylabel("Growth Decay Rate (%)")
     ax.set_xlim(left=0)
+
     return {
         "ax": ax,
-        "last": (s/D).tail(1).max(),
-        "max": (s/D).max(),
-        "min": (s/D).min(),
-        "mean": (s/D).mean(),
+        "stats": {
+            "last": S.tail(1).max(),
+            "max": S.max(),
+            "min": S.min(),
+            "mean": S.mean()
+        }
     }
