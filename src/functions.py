@@ -135,15 +135,20 @@ def project_ols_growth_rate_min(df, days, growth_decay_rate):
     index = last.index.values[0]
     cumulative = last.cumulative.values[0]
     ols_growth_rate = last['ols-growth-rate-min'].values[0]
+    date = last['date'].values[0]
 
     tuples = []
+    dates = []
     for d in range(1, days+1):
+        date = add_days(date,1)
         cumulative = cumulative * factor(ols_growth_rate)
         ols_growth_rate = ols_growth_rate * factor(growth_decay_rate)
-        tuples.append(np.array([cumulative]))
-
+        dates.append(date)
+        tuples.append(cumulative)
     df = df.reindex(range(0, index+days+1))
+    #df.loc[df.index > index, ['date']] = tuples[:,0]
     df.loc[df.index > index, 'cumulative'] = tuples
+    df.loc[df.index > index, 'date'] = dates
     df.loc[df.index > index, 'total'] = df.loc[df.index > index, 'cumulative'] - df.loc[df.index > index-1, 'cumulative'].shift(1)
 
     return df
