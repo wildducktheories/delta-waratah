@@ -130,11 +130,11 @@ def project_cumulative(df, days, rate):
     df.loc[df.index > max_index, 'total'] = df.loc[df.index > max_index, 'cumulative'] - df.loc[df.index > max_index-1, 'cumulative'].shift(1)
     return df
 
-def project_ols_growth_rate_min(df, days, growth_decay_rate):
+def project_ols_growth_rate_min(df, days, growth_decay_rate, growth_rate_column='ols-growth-rate-min'):
     last = df.tail(1)
     index = last.index.values[0]
     cumulative = last.cumulative.values[0]
-    ols_growth_rate = last['ols-growth-rate-min'].values[0]
+    ols_growth_rate = last[growth_rate_column].values[0]
     date = last['date'].values[0]
 
     tuples = []
