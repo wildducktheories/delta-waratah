@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 from statsmodels.regression.rolling import RollingOLS
+from collections import OrderedDict
 
 def append_recent_date(df, date, local):
     return calc_cumulative(
@@ -402,6 +403,10 @@ def summary(df):
     gp1=derive_growth_params(slice)
     decay_rate1=gp1[1]
 
+    peak_cases = peak_cases_projection(df)
+
+    peak_cases_k = [k for k in peak_cases.keys()]
+
     summary="""
     <style>
         span.good {
@@ -430,6 +435,13 @@ def summary(df):
     ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
 
     Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
+    </pre>
+    <h2>Peak Cases Projection</h2>
+    <br/>
+    <pre>
+    Date: {peak_cases[peak_cases_k[1]]["date"]} ({peak_cases[peak_cases_k[0]]["date"]} - {peak_cases[peak_cases_k[2]]["date"]})
+    Cases: {peak_cases[peak_cases_k[1]]["total"]} ({peak_cases[peak_cases_k[0]]["total"]} - {peak_cases[peak_cases_k[2]]["total"]})
+    Decay Rate: {peak_cases[peak_cases_k[1]]["decay_rate"]}% ({peak_cases[peak_cases_k[0]]["decay_rate"]}% - {peak_cases[peak_cases_k[2]]["decay_rate"]}%)
     </pre>
     """
     return summary
@@ -477,3 +489,28 @@ def plot_decay_rate_estimates(df, outbreak="Sydney 2021", step=1):
     ax.set_xlim(left=0)
 
     return ax
+
+def peak_cases_projection(df):
+    out=[r for r in decay_rate_estimates(df, 7, 28)]
+    S=out[-1][1]
+
+    decay_rates={
+    #    "min": S.min(),
+    #    "max": S.max(),
+        "mean": S.mean(),
+        "last": S.tail(1).values[0],
+        "mid": -np.sqrt(S.mean()*S.tail(1).values[0])
+    }
+    decay_rates={ k: decay_rates[k] for k in decay_rates if decay_rates[k] <= 0 }
+
+    out=OrderedDict()
+
+    for k in [t[0] for t in sorted([(k,decay_rates[k]) for k in decay_rates], key=lambda t: t[1])]:
+        s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), decay_rates[k], 'ols-growth-rate'))
+        max_s = s[s["total"] == s["total"].max()][["date", "total"]]
+        out[k]={
+            "date": max_s["date"].values[0],
+            "decay_rate": round(decay_rates[k],3),
+            "total": int(max_s["total"].values[0]),
+        }
+    return out
