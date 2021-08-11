@@ -403,6 +403,9 @@ def summary(df):
     gp1=derive_growth_params(slice)
     decay_rate1=gp1[1]
 
+    peak_cases_1 = peak_cases_projection(df.head(len(df)-1))
+    peak_cases_1_k = [k for k in peak_cases_1.keys()]
+
     peak_cases = peak_cases_projection(df)
 
     peak_cases_k = [k for k in peak_cases.keys()]
@@ -439,9 +442,9 @@ def summary(df):
     <h2>Peak Cases Projection</h2>
     <br/>
     <pre>
-    Date: {peak_cases[peak_cases_k[1]]["date"]} ({peak_cases[peak_cases_k[0]]["date"]} - {peak_cases[peak_cases_k[2]]["date"]})
-    Cases: {peak_cases[peak_cases_k[1]]["total"]} ({peak_cases[peak_cases_k[0]]["total"]} - {peak_cases[peak_cases_k[2]]["total"]})
-    Decay Rate: {peak_cases[peak_cases_k[1]]["decay_rate"]}% ({peak_cases[peak_cases_k[0]]["decay_rate"]}% - {peak_cases[peak_cases_k[2]]["decay_rate"]}%)
+    Date: {peak_cases[peak_cases_k[1]]["date"]} {g(peak_cases[peak_cases_k[1]]["day"]-peak_cases_1[peak_cases_1_k[1]]["day"])} ({peak_cases[peak_cases_k[0]]["date"]} - {peak_cases[peak_cases_k[2]]["date"]})
+    Cases: {peak_cases[peak_cases_k[1]]["total"]} {g(peak_cases[peak_cases_k[1]]["total"]-peak_cases_1[peak_cases_1_k[1]]["total"])} ({peak_cases[peak_cases_k[0]]["total"]} - {peak_cases[peak_cases_k[2]]["total"]})
+    Decay Rate: {round(peak_cases[peak_cases_k[1]]["decay_rate"],2)}% {g(round(peak_cases[peak_cases_k[1]]["decay_rate"]-peak_cases_1[peak_cases_1_k[1]]["decay_rate"],2))} ({peak_cases[peak_cases_k[0]]["decay_rate"]}% - {peak_cases[peak_cases_k[2]]["decay_rate"]}%)
     </pre>
     """
     return summary
@@ -509,6 +512,7 @@ def peak_cases_projection(df):
         s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), decay_rates[k], 'ols-growth-rate'))
         max_s = s[s["total"] == s["total"].max()][["date", "total"]]
         out[k]={
+            "day": max_s.index.values[0],
             "date": max_s["date"].values[0],
             "decay_rate": round(decay_rates[k],3),
             "total": int(max_s["total"].values[0]),
