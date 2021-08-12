@@ -440,6 +440,11 @@ def summary(df):
     Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
     </pre>
     <h2>Peak Cases Projection</h2>
+    <p><i>The peak cases projections displayed here should be taken with a large grain of salt. They are highly sensitive to the
+    growth and decay rate estimates used and also to the (likely unsound) assumption that the decay rate will be roughly constant going forward.
+    An <a href="animated-new-cases.gif">animation</a> is available which illustrates how unstable this
+    projection is with time.</i>
+    </p>
     <br/>
     <pre>
     Date: {peak_cases[peak_cases_k[1]]["date"]} {g(peak_cases[peak_cases_k[1]]["day"]-peak_cases_1[peak_cases_1_k[1]]["day"])} ({peak_cases[peak_cases_k[0]]["date"]} - {peak_cases[peak_cases_k[2]]["date"]})
@@ -518,3 +523,44 @@ def peak_cases_projection(df):
             "total": int(max_s["total"].values[0]),
         }
     return out
+
+def plot_new_cases_projection(df):
+    out=[r for r in decay_rate_estimates(df, 7, 28)]
+    S=out[-1][1]
+
+    results={
+        "min": S.min(),
+        "max": S.max(),
+        "mean": S.mean(),
+        "last": S.tail(1).values[0],
+        "mid": -np.sqrt(S.mean()*S.tail(1).values[0])
+    }
+
+    results={ k: results[k] for k in results if results[k] <= 0 }
+
+    legends=["daily new cases"]
+    ax=df['total'].plot()
+    for k in results:
+        v=results[k]
+        s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), v, 'ols-growth-rate'))
+        _max_total=s['total'].max()
+        legends.append(f"{k} decay rate={round(v,2)}%, max={int(round(_max_total,0))}")
+        style="dashed" if k == "mid" else "dotted"
+        ax=s[s.index>len(df.index)]['total'].plot(figsize=(10,10),linestyle=style)
+    ax.legend(legends)
+    ax.grid()
+    ax.set_xticks([r for r in range(0,365, 14)])
+    ax.set_yticks([r for r in range(0,1500, 50)])
+    ax.set_title(f"Projected Daily New Cases For Various Observed Decay Rates ({df.tail(1)['date'].values[0]})")
+    return ax
+
+def animate_new_cases_plot(df, days, fn):
+    images=[]
+    for i in range(0, days):
+        ax=plot_new_cases_projection(df.head(len(df)-days+1+i))
+        b=BytesIO()
+        ax.figure.savefig(b, format="png")
+        ax.clear()
+        images.append(Image.open(b))
+
+    images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
