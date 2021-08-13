@@ -49,19 +49,22 @@ def select_outbreak(df_in, generation_days=5):
     df['ols-growth-rate']=((np.exp(model.fit().params['x1'])-1)*100)
     df['ratio-growth-rate']=((df['cumulative']/df['cumulative'].shift(generation_days))**(1/generation_days)-1)*100
     df['Reff'] = ((df['ols-growth-rate']+100)/100)**generation_days
-    df['doubling-period'] = np.log(2)/np.log(((df['ols-growth-rate']+100)/100))
 
-    df['ols-growth-rate-median'] = df['ols-growth-rate'].rolling(generation_days, min_periods=1).median()
-    df['ols-growth-rate-min'] = df['ols-growth-rate'].rolling(generation_days, min_periods=1).min()
-    df['ols-growth-rate-max'] = df['ols-growth-rate'].rolling(generation_days, min_periods=1).max()
+    ols_growth_rate=df.loc[df['ols-growth-rate'].notna(), ['ols-growth-rate']].copy()
+
+    df['doubling-period'] = np.log(2)/np.log(((ols_growth_rate+100)/100))
+
+    df['ols-growth-rate-median'] = ols_growth_rate.rolling(generation_days, min_periods=1).median()
+    df['ols-growth-rate-min'] = ols_growth_rate.rolling(generation_days, min_periods=1).min()
+    df['ols-growth-rate-max'] = ols_growth_rate.rolling(generation_days, min_periods=1).max()
     df['linear-growth-rate'] = (df['total']/df['cumulative']*100)
     df['linear-growth-rate-max'] = df['linear-growth-rate'].rolling(window=5).max()
     df['linear-growth-rate-min'] = df['linear-growth-rate'].rolling(window=5).min()
     df['linear-growth-rate-mean'] = df['linear-growth-rate'].rolling(window=5).mean()
     df['linear-growth-rate-relative-error'] = ((df['linear-growth-rate']-df['ols-growth-rate'])/df['ols-growth-rate'])*100
 
-    endog=np.log(df['ols-growth-rate'])
-    exog=sm.add_constant(df.index)
+    endog=np.log(ols_growth_rate)
+    exog=sm.add_constant(ols_growth_rate.index)
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
     df['ols-growth-rate-decay']=rate(np.exp(model.fit().params['x1']))
 
