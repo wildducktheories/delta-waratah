@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 from statsmodels.regression.rolling import RollingOLS
+import matplotlib.pyplot as plt
 from collections import OrderedDict
 
 def append_recent_date(df, date, local):
@@ -560,7 +561,7 @@ def animate_new_cases_plot(df, days, fn):
         ax=plot_new_cases_projection(df.head(len(df)-days+1+i))
         b=BytesIO()
         ax.figure.savefig(b, format="png")
-        ax.clear()
+        plt.show()
         images.append(Image.open(b))
 
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
