@@ -521,7 +521,7 @@ def peak_cases_projection(df):
         s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), decay_rates[k], 'ols-growth-rate'))
         max_s = s[s["total"] == s["total"].max()][["date", "total"]]
         out[k]={
-            "day": max_s.index.values[0],
+            "day": int(max_s.index.values[0]),
             "date": max_s["date"].values[0],
             "decay_rate": round(decay_rates[k],3),
             "total": int(max_s["total"].values[0]),
@@ -556,7 +556,7 @@ def plot_new_cases_projection(df):
     ax.set_ylim(top=1500)
     ax.set_ybound(0, 1500)
     ax.set_xticks([r for r in range(0,365, 14)])
-    ax.set_yticks([r for r in range(0,1500, 50)])
+    ax.set_yticks([r for r in range(0,3500, 100)])
     ax.set_title(f"Projected Daily New Cases For Various Observed Decay Rates ({df.tail(1)['date'].values[0]})")
     return ax
 
@@ -569,4 +569,4 @@ def animate_new_cases_plot(df, days, fn):
         plt.show()
         images.append(Image.open(b))
 
-    images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=300)
+    images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=1500)
