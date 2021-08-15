@@ -443,18 +443,18 @@ def summary(df):
 
     Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
     </pre>
-    <h2>Peak Cases Projection</h2>
-    <p><i>The peak cases projections displayed here should be taken with a large grain of salt. They are highly sensitive to the
-    growth and decay rate estimates used and also to the (likely unsound) assumption that the decay rate will be roughly constant going forward.
-    An <a href="animated-new-cases.gif">animation</a> is available which illustrates how unstable this
-    projection is with time.</i>
-    </p>
+    <h2>Peak Cases Projection *</h2>
     <br/>
     <pre>
     Date: {peak_cases[peak_cases_k[1]]["date"]} {g(peak_cases[peak_cases_k[1]]["day"]-peak_cases_1[peak_cases_1_k[1]]["day"])} ({peak_cases[peak_cases_k[0]]["date"]} - {peak_cases[peak_cases_k[2]]["date"]})
     Cases: {peak_cases[peak_cases_k[1]]["total"]} {g(peak_cases[peak_cases_k[1]]["total"]-peak_cases_1[peak_cases_1_k[1]]["total"])} ({peak_cases[peak_cases_k[0]]["total"]} - {peak_cases[peak_cases_k[2]]["total"]})
     Decay Rate: {round(peak_cases[peak_cases_k[1]]["decay_rate"],2)}% {g(round(peak_cases[peak_cases_k[1]]["decay_rate"]-peak_cases_1[peak_cases_1_k[1]]["decay_rate"],2))} ({peak_cases[peak_cases_k[0]]["decay_rate"]}% - {peak_cases[peak_cases_k[2]]["decay_rate"]}%)
     </pre>
+    <p><i>* The peak cases projection displayed here should be taken with a large grain of salt. It is highly sensitive to the
+    growth and decay rate estimates used and also to the (likely unsound) assumption that the decay rate will be roughly constant going forward.
+    An <a href="animated-new-cases.gif">animation</a> is available which illustrates how unstable this
+    projection is with time.</i>
+    </p>
     """
     return summary
 
