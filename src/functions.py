@@ -502,6 +502,17 @@ def plot_decay_rate_estimates(df, outbreak="Sydney 2021", step=1):
 
     return ax
 
+def peak_cases(df, g):
+    s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), g, 'ols-growth-rate'))
+    max_s = s[s["total"] == s["total"].max()][["date", "total"]]
+    return {
+        "day": int(max_s.index.values[0]),
+        "date": max_s["date"].values[0],
+        "decay_rate": round(g,3),
+        "total": int(max_s["total"].values[0]),
+    }
+
+
 def peak_cases_projection(df):
     out=[r for r in decay_rate_estimates(df, 7, 28)]
     S=out[-1][1]
@@ -518,14 +529,7 @@ def peak_cases_projection(df):
     out=OrderedDict()
 
     for k in [t[0] for t in sorted([(k,decay_rates[k]) for k in decay_rates], key=lambda t: t[1])]:
-        s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), decay_rates[k], 'ols-growth-rate'))
-        max_s = s[s["total"] == s["total"].max()][["date", "total"]]
-        out[k]={
-            "day": int(max_s.index.values[0]),
-            "date": max_s["date"].values[0],
-            "decay_rate": round(decay_rates[k],3),
-            "total": int(max_s["total"].values[0]),
-        }
+        out[k]=peak_cases(df, decay_rates[k])
     return out
 
 def plot_new_cases_projection(df):
