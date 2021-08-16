@@ -553,10 +553,11 @@ def plot_new_cases_projection(df):
         ax=s[s.index>len(df.index)]['total'].plot(figsize=(10,10),linestyle=style)
     ax.legend(legends)
     ax.grid()
-    ax.set_ylim(top=1500)
-    ax.set_ybound(0, 1500)
+    ax.set_ylim(top=50000)
+    ax.set_ybound(1, 50000)
+    ax.set_yscale('log')
     ax.set_xticks([r for r in range(0,365, 14)])
-    ax.set_yticks([r for r in range(0,3500, 100)])
+    #ax.set_yticks([r for r in range(0,3500, 100)])
     ax.set_title(f"Projected Daily New Cases For Various Observed Decay Rates ({df.tail(1)['date'].values[0]})")
     return ax
 
