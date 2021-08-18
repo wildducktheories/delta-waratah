@@ -6,7 +6,7 @@ default:
 publish: convert sync
 
 convert:
-	jupyter nbconvert sydney-outbreaks.ipynb --to html --stdout > archive/$(RUN_DATE)/sydney-outbreaks.html
+	jupyter nbconvert sydney-outbreaks.ipynb --LatexPreprocessor.enabled True --to html --stdout > archive/$(RUN_DATE)/sydney-outbreaks.html
 
 sync:
 	aws s3 sync archive/$(RUN_DATE)/ s3://jonseymour/delta-waratah/archive/$(RUN_DATE)/ --profile jonseymour --acl public-read
