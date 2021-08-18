@@ -14,6 +14,8 @@ def load_data(fn):
         'Known local source inside HQ': 'local-hq',
         'Under investigation': 'under-investigation'
     }, axis=1)
+    for c in df.columns:
+        df.loc[(df[c].isna()), c]=0
     try:
         df["local-hq"] is None
     except KeyError as e:
