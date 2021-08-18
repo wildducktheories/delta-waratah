@@ -552,7 +552,8 @@ def plot_new_cases_projection(df):
         v=results[k]
         s=select_outbreak(project_ols_growth_rate_min(df, 365-len(df), v, 'ols-growth-rate'))
         _max_total=s['total'].max()
-        legends.append(f"{k} decay rate={round(v,2)}%, max={int(round(_max_total,0))}")
+        _max_date=s.loc[s["total"]==_max_total, "date"].values[0]
+        legends.append(f"{k} decay rate={round(v,2)}%, max={int(round(_max_total,0))}, date={_max_date}")
         style="dashed" if k == "mid" else "dotted"
         ax=s[s.index>len(df.index)]['total'].plot(figsize=(10,10),linestyle=style)
     ax.legend(legends)
