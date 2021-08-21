@@ -15,14 +15,12 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 
 def append_recent_date(df, date, local):
-    return calc_cumulative(
-        df.append({
+    return df.append(
+        {
             "date": date,
-            "local": local,
-            "unknown": 0,
-            "under-investigation": 0,
-            "local-hq": 0
-        }, ignore_index=True))
+            "total": local,
+            "cumulative": df.tail(1)["cumulative"].values[0]+local
+        }, ignore_index=True)
 
 def calc_cumulative(df):
     df['total']=df['local']+df['unknown']+df['under-investigation']+df['local-hq']
