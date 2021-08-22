@@ -412,7 +412,7 @@ def summary(df):
 
     peak_cases_k = [k for k in peak_cases.keys()]
 
-    if len(peak_cases_1_k) < 3 and len(peak_cases_key) < 3:
+    if len(peak_cases_1_k) >= 3 and len(peak_cases_k) >= 3:
         peak=f"""
     <h2>Peak Cases Projection *</h2>
     <br/>
