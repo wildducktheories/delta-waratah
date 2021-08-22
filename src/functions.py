@@ -384,6 +384,7 @@ def summary(df):
     columns=[
         "cumulative",
         "total",
+        "correction",
         "one-day-error",
         "ols-growth-rate",
         "ols-growth-rate-decay",
@@ -448,11 +449,14 @@ def summary(df):
     <h1>Summary</h1>
     <br/>
     <pre>
+    Date: {df.tail(1)['date'].values[0]} (#{df.tail(1).index.values[0]})
+
     Projection (from yesterday): {round(df.tail(2).head(1)["one-day-projection-total"].values[0])}
     Projection Error: {round(df.tail(1)["one-day-error"].values[0])} ({hh(round(df.tail(1)["one-day-relative-error"].values[0],1))}%)
 
     Cumulative Reported Today: {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
     New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
+    Total Corrections: {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}
 
     Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],1)}% per day {g(delta["ols-growth-rate"].values[0])}
     Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],1)}% per day {g(delta["linear-growth-rate"].values[0])}
