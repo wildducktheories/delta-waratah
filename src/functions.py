@@ -531,12 +531,13 @@ def peak_cases_projection(df):
     S=out[-1][1]
 
     decay_rates={
-    #    "min": S.min(),
-    #    "max": S.max(),
         "mean": S.mean(),
-        "last": S.tail(1).values[0],
-        "mid": -np.sqrt(S.mean()*S.tail(1).values[0])
+        "last": S.tail(1).values[0]
     }
+
+    if S.mean() < 0 and S.tail(1).values[0] < 0:
+        decay_rates["mid"] = -np.sqrt(S.mean()*S.tail(1).values[0])
+
     decay_rates={ k: decay_rates[k] for k in decay_rates if decay_rates[k] <= 0 }
 
     out=OrderedDict()
