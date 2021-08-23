@@ -14,31 +14,25 @@ def fn_to_date(fn):
     date=f"{yyyy}-{mm}-{dd}"
     return date
 
-DATE_DICT=None
+def load_index():
+    response=requests.get("https://www.health.nsw.gov.au/news/Pages/2021-nsw-health.aspx")
+    response.raise_for_status()
+    content=response.content
+    pattern=re.compile('.*<a href="([0-9_]*\\.aspx)" xmlns:ddwrt="http://schemas.microsoft.com/WebParts/v2/DataView/runtime">COVID-19 \\(Coronavirus\\) .*</a>')
+    out=[]
+    for line in content.decode('utf-8').split("\n"):
+        g=pattern.match(line)
+        if g:
+            out.append(g.groups()[0])
+        else:
+            pass
+    out=sorted(out)
+    out=filter(lambda x: x > '20210616', out)
+    return OrderedDict([(fn_to_date(k), k) for k in out])
 
-def load_datedict():
-    global DATE_DICT
-    if not DATE_DICT:
-        response=requests.get("https://www.health.nsw.gov.au/news/Pages/2021-nsw-health.aspx")
-        response.raise_for_status()
-        content=response.content
-        pattern=re.compile('.*<a href="([0-9_]*\\.aspx)" xmlns:ddwrt="http://schemas.microsoft.com/WebParts/v2/DataView/runtime">COVID-19 \\(Coronavirus\\) .*</a>')
-        out=[]
-        for line in content.decode('utf-8').split("\n"):
-            g=pattern.match(line)
-            if g:
-                out.append(g.groups()[0])
-            else:
-                pass
-        out=sorted(out)
-        out=filter(lambda x: x > '20210616', out)
-        DATE_DICT=OrderedDict([(fn_to_date(k), k) for k in out])
-    return DATE_DICT
-
-def load_statistics(date):
+def load_statistics(file, date):
     fn=f"archive/{date}/statistics.html"
     if not os.path.exists(fn):
-        file=load_datedict()[date]
         response = requests.get(f"https://www.health.nsw.gov.au/news/Pages/{file}")
         response.raise_for_status()
         content=response.content
@@ -50,18 +44,20 @@ def load_statistics(date):
             content=f.read()
     return content.decode('utf-8')
 
-def extract_total(date, debug=False):
-    content=load_statistics(date)
-    content=content.replace("​", "")
-    content=content.replace("two", "2")
-    content=content.replace("five", "5")
-    content=content.replace("no", "0")
+def parse_statistics_html(html, debug=False):
+
+    html=html.replace("​", "")
+    html=html.replace("two", "2")
+    html=html.replace("five", "5")
+    html=html.replace("no", "0")
+
     pattern_cumulative=re.compile("^.*There have been ([\d,]*) locally acquired cases reported since 16 June 2021")
     pattern=re.compile("^.*<p[^>]*>[. ]*NSW recorded ([^ ]*) .*locally acquired cases of COVID-19")
     pattern_partial=re.compile("^.*NSW recorded")
+
     total=None
     cumulative=None
-    for c in content.split("\n"):
+    for c in html.split("\n"):
         g=pattern_cumulative.match(c)
         if g:
             cumulative=int(g.groups()[0].replace(",",""))
@@ -73,16 +69,15 @@ def extract_total(date, debug=False):
             else: 
                 if debug:
                     print(c)
-    return (date, total, cumulative)
+    return (total, cumulative)
 
 def load_nswhealth_stats():
     out=[]
-    for date in load_datedict():
-        (date, total, cumulative)=extract_total(date)
-        #if (total is None or cumulative is None):
+    index=load_index()
+    for date in index:
+        (total, cumulative)=parse_statistics_html(load_statistics(index[date], date))
         out.append((date, total, cumulative))
     df = pd.DataFrame(columns=['date', 'total', 'cumulative_corrected'], data=out)
     df['cumulative'] = df['total'].cumsum()
     df['correction'] = df['cumulative_corrected'] - df['cumulative']
-#    df.loc[df["cumulative"].isna(), 'cumulative'] = df.loc[df["cumulative"].isna(), 'total'].cumsum()
     return df
