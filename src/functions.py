@@ -432,7 +432,7 @@ def summary(df):
         peak=f"""
         <h2>Peak Cases Projection</h2>
         <p>
-        Sane peak case projections are not possible at this time.
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sane peak case projections are not possible at this time.
         </p>
         """
 
@@ -451,12 +451,13 @@ def summary(df):
     <pre>
     Date: {df.tail(1)['date'].values[0]} (#{df.tail(1).index.values[0]})
 
+    New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
+    Cumulative (since 2021-06-16): {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
+    Corrections (since 2021-06-16): {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}
+
     Projection (from yesterday): {round(df.tail(2).head(1)["one-day-projection-total"].values[0])}
     Projection Error: {round(df.tail(1)["one-day-error"].values[0])} ({hh(round(df.tail(1)["one-day-relative-error"].values[0],1))}%)
-
-    Cumulative Reported Today: {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
-    New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
-    Total Corrections: {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}
+    Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
 
     Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],1)}% per day {g(delta["ols-growth-rate"].values[0])}
     Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],1)}% per day {g(delta["linear-growth-rate"].values[0])}
@@ -465,8 +466,6 @@ def summary(df):
 
     Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
     ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
-
-    Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
     </pre>"""+peak
 
     return summary
