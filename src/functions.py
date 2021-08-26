@@ -19,7 +19,9 @@ def append_recent_date(df, date, local):
         {
             "date": date,
             "total": local,
-            "cumulative": df.tail(1)["cumulative"].values[0]+local
+            "cumulative": df.tail(1)["cumulative"].values[0]+local,
+            "cumulative_corrected": df.tail(1)["cumulative_corrected"].values[0]+local,
+            "correction": df.tail(1)["correction"].values[0]
         }, ignore_index=True)
 
 def calc_cumulative(df):
@@ -328,7 +330,7 @@ def plot_log_log_trend(ax, df, color, max_bounds, index):
 
 
 def plot_log_log_day(day, vic, syd):
-    max_bounds=(vic['cumulative'].max(),vic['total'].max())
+    max_bounds=(syd['cumulative'].max(),syd['total'].max()*7)
     slice = syd[syd.index <= day]
     future = syd[syd.index > day]
     vic_slice=vic[vic.index <= day]

@@ -64,7 +64,7 @@ def parse_statistics_html(html, debug=False):
         if pattern_partial.match(c):
             g=pattern.match(c)
             if g:
-                total=int(g.groups()[0])
+                total=int(g.groups()[0].replace(",",""))
                 continue
             else: 
                 if debug:
