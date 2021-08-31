@@ -591,3 +591,54 @@ def animate_new_cases_plot(df, days, fn):
         images.append(Image.open(b))
 
     images[0].save(fn, save_all=True, append_images=images[1:], loop=0, duration=1500)
+
+def plot_health_outcomes(df):
+    window=7
+    endog=df['icu']
+    exog=sm.add_constant(df['cumulative'])
+    model = RollingOLS(endog=endog, exog=exog, window=window, min_nobs=window)
+    icu_params=model.fit().params
+    icu_m,icu_b=(icu_params['cumulative'].tail(1).values[0], icu_params['const'].tail(1).values[0])
+
+    icu_m_7,icu_b_7=(icu_params['cumulative'].head(len(icu_params)-7).tail(1).values[0], icu_params['const'].head(len(icu_params)-7).tail(1).values[0])
+
+    endog=df['hospitalised']
+    exog=sm.add_constant(df['cumulative'])
+    model = RollingOLS(endog=endog, exog=exog, window=window, min_nobs=window)
+    hospitalised_params=model.fit().params
+    hospitalised_m,hospitalised_b=(hospitalised_params['cumulative'].tail(1).values[0], hospitalised_params['const'].tail(1).values[0])
+    hospitalised_m_7,hospitalised_b_7=(hospitalised_params['cumulative'].head(len(hospitalised_params)-7).tail(1).values[0], hospitalised_params['const'].head(len(hospitalised_params)-7).tail(1).values[0])
+
+    slice=df.loc[df['deaths'].notna(), ['deaths', 'cumulative']]
+    endog=slice['deaths']
+    exog=sm.add_constant(slice['cumulative'])
+    model = RollingOLS(endog=endog, exog=exog, window=window, min_nobs=window)
+    deaths_params=model.fit().params
+    deaths_m,deaths_b=(deaths_params['cumulative'].tail(1).values[0], deaths_params['const'].tail(1).values[0])
+    deaths_m_7,deaths_b_7=(deaths_params['cumulative'].head(len(deaths_params)-7).tail(1).values[0], deaths_params['const'].head(len(deaths_params)-7).tail(1).values[0])
+
+    ax=df.plot(y='hospitalised', x='cumulative', figsize=(10,10))
+    #ax.set_yscale('log')
+    #ax.set_xscale('log')
+    ax.plot(df['cumulative'], df['cumulative']*hospitalised_m_7+hospitalised_b_7, linestyle="dotted", color="C0")
+    ax.plot(df['cumulative'], df['cumulative']*hospitalised_m+hospitalised_b, linestyle="dashed", color="C0")
+    ax.set_title("Concurrent Health Outcomes vs Cumulative Cases")
+    ax.plot(df['cumulative'], df['icu'], color="C1")
+    ax.plot(df['cumulative'], df['cumulative']*icu_m_7+icu_b_7, linestyle="dotted", color="C1")
+    ax.plot(df['cumulative'], df['cumulative']*icu_m+icu_b, linestyle="dashed", color="C1")
+    ax.plot(df['cumulative'], df['deaths'], color="C2")
+    ax.plot(df['cumulative'], df['cumulative']*deaths_m_7+deaths_b_7, linestyle="dotted", color="C2")
+    ax.plot(df['cumulative'], df['cumulative']*deaths_m+deaths_b, linestyle="dashed", color="C2")
+    percentage=lambda x,y : f"{round(x*100,y)}%"
+    ax.legend([
+        "hospitalised",
+        f"hospitalised (7-day fit, last week), m={percentage(hospitalised_m_7,1)}",
+        f"hospitalised (7-day fit), m={percentage(hospitalised_m,1)}",
+        "icu",
+        f"icu (7-day fit, last week), m={percentage(icu_m_7,2)}",
+        f"icu (7-day fit), m={percentage(icu_m,2)}",
+        "deaths",
+        f"deaths (7-day fit, last week), m={percentage(deaths_m_7,2)}",
+        f"deaths (7-day fit), m={percentage(deaths_m,2)}"
+    ])
+    return ax
