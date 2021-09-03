@@ -84,6 +84,8 @@ def select_outbreak(df_in, generation_days=5):
     df["7-day-projection"] = np.round(df["min"])
     df["7-day-projection-relative-error"] = modeling_errors(df, None)
     df["7-day-projection-error"] = df["7-day-projection"]-df['cumulative']
+    df["7-day-forward-projection-cumulative"] = np.int32(np.round(df["cumulative"]*(factor(df["ols-growth-rate-min"])**7)))
+    df["7-day-forward-projection-total"] = np.int32(np.round(df["cumulative"]*(factor(df["ols-growth-rate-min"])**6)*(factor(df["ols-growth-rate-min"])-1)))
 
     calculate_ltlc_params(df)
 
@@ -460,6 +462,7 @@ def summary(df):
     Projection (from yesterday): {round(df.tail(2).head(1)["one-day-projection-total"].values[0])}
     Projection Error: {round(df.tail(1)["one-day-error"].values[0])} ({hh(round(df.tail(1)["one-day-relative-error"].values[0],1))}%)
     Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
+    Projection (for next week): {round(df.tail(1)["7-day-forward-projection-total"].values[0])}
 
     Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],1)}% per day {g(delta["ols-growth-rate"].values[0])}
     Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],1)}% per day {g(delta["linear-growth-rate"].values[0])}
