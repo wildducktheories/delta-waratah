@@ -2,6 +2,7 @@ import json
 import requests
 import re
 import os
+import numpy as np
 import pandas as pd
 
 from collections import OrderedDict
@@ -55,7 +56,7 @@ def parse_statistics_html(html, debug=False):
     html=html.replace("six", "6")
     html=html.replace("seven", "7")
     html=html.replace(" no ", " 0 ")
-
+    pattern_obsfucate=re.compile("^(.*)<span[^>]*>(.*)</span>(.*)")
     pattern_cumulative=re.compile("^.*There have been ([\d,]*) locally acquired cases reported since 16 June 2021")
     pattern=re.compile("^.*NSW recorded ([^ ]*) .*locally acquired cases of COVID-19")
     pattern_partial=re.compile("^.*NSW recorded")
@@ -72,6 +73,11 @@ def parse_statistics_html(html, debug=False):
     deaths=None
 
     for c in html.split("\n"):
+        g=pattern_obsfucate.match(c)
+        while g is not None:
+            c="".join(g.groups())
+            g=pattern_obsfucate.match(c)
+
         g=pattern_cumulative.match(c)
         if g:
             cumulative=int(g.groups()[0].replace(",",""))
@@ -109,6 +115,29 @@ def load_nswhealth_stats():
     index=load_index()
     for date in index:
         (total, cumulative, hospitalised, icu, ventilated, deaths)=parse_statistics_html(load_statistics(index[date], date))
+        if total is None or cumulative is None:
+            json_file=f'archive/{date}/statistics.json'
+            if not os.path.exists(json_file):
+                with open(json_file, "wb") as f:
+                    f.write(json.dumps({
+                        "total": total,
+                        "cumulative_corrected": cumulative,
+                        "hospitalised": hospitalised,
+                        "icu": icu,
+                        "ventilated": ventilated,
+                        "deaths": deaths
+                    }).encode('utf-8'))
+            with open(f'archive/{date}/statistics.json', "rb") as f:
+                stats=json.loads(f.read().decode("utf-8"))
+                total=stats.get("total")
+                cumulative=stats.get("cumulative_corrected")
+                hospitalised=stats.get("hospitalised")
+                icu=stats.get("icu"),
+                ventilated=stats.get("ventilated")
+                deaths=stats.get("deaths")
+
+                if type(icu) == tuple or icu is None:
+                    icu=float("NaN")
         out.append((date, total, cumulative, hospitalised, icu, ventilated, deaths))
     df = pd.DataFrame(columns=['date', 'total',  'cumulative_corrected', 'hospitalised', 'icu', 'ventilated', 'deaths'], data=out)
     df['cumulative'] = df['total'].cumsum()
