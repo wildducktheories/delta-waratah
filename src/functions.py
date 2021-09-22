@@ -471,7 +471,17 @@ def summary(df):
 
     Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
     ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
-    </pre>"""+peak
+    </pre>"""+peak+f"""<br/><br/>https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html"""
+
+    extra=f"""
+    <h2>More Info</h2>
+    <p>[1]</p>
+    <pre>
+    <dl>
+    <dt>[1]</dt><dd><a href="https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html">https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html</a></dd>
+    </dl>
+    </pre>
+"""
 
     return summary
 
