@@ -48,7 +48,13 @@ def select_outbreak(df_in, generation_days=5):
     model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
     df['ols-growth-rate']=((np.exp(model.fit().params['x1'])-1)*100)
     df['ratio-growth-rate']=((df['cumulative']/df['cumulative'].shift(generation_days))**(1/generation_days)-1)*100
-    df['Reff'] = ((df['ols-growth-rate']+100)/100)**generation_days
+    df['Reff-old'] = ((df['ols-growth-rate']+100)/100)**generation_days
+
+    endog=np.log(df['total'].rolling(window=generation_days).mean())
+    exog=sm.add_constant(df.index)
+    model = RollingOLS(endog=endog, exog=exog, window=generation_days, min_nobs=generation_days)
+    df['ols-growth-rate-new']=((np.exp(model.fit().params['x1'])-1)*100)
+    df['Reff'] = ((df['ols-growth-rate-new']+100)/100)**generation_days
 
     ols_growth_rate=df.loc[df['ols-growth-rate'].notna(), ['ols-growth-rate']].copy()
 
@@ -393,6 +399,7 @@ def summary(df):
         "ols-growth-rate",
         "ols-growth-rate-decay",
         "doubling-period",
+        "Reff-old",
         "Reff",
         "ltlc-gradient",
         "one-day-projection-total",
@@ -464,9 +471,10 @@ def summary(df):
     Projection (for tomorrow): {round(df.tail(1)["one-day-projection-total"].values[0])}
     Projection (for next week): {round(df.tail(1)["7-day-forward-projection-total"].values[0])}
 
-    Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],1)}% per day {g(delta["ols-growth-rate"].values[0])}
-    Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],1)}% per day {g(delta["linear-growth-rate"].values[0])}
+    Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],2)}% per day {g(delta["ols-growth-rate"].values[0])}
+    Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],2)}% per day {g(delta["linear-growth-rate"].values[0])}
     Reff: {round(df.tail(1)["Reff"].values[0],2)} {g(delta["Reff"].values[0])}
+    Reff-old: {round(df.tail(1)["Reff-old"].values[0],2)} {g(delta["Reff-old"].values[0])}
     Doubling Period:  {round(df.tail(1)["doubling-period"].values[0],1)} days {h(delta["doubling-period"].values[0])}
 
     Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
