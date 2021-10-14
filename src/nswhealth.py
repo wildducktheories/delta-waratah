@@ -20,11 +20,15 @@ def load_index():
     response.raise_for_status()
     content=response.content
     pattern=re.compile('.*<a href="([0-9_]*\\.aspx)" xmlns:ddwrt="http://schemas.microsoft.com/WebParts/v2/DataView/runtime">COVID-19 \\(Coronavirus\\) .*</a>')
+    pattern2=re.compile('.*<a href="([0-9_]*\\.aspx)" xmlns:ddwrt="http://schemas.microsoft.com/WebParts/v2/DataView/runtime">Coronavirus \\(COVID-19\\) statistics.*</a>')
     out=[]
     for line in content.decode('utf-8').split("\n"):
         g=pattern.match(line)
+        g2=pattern2.match(line)
         if g:
             out.append(g.groups()[0])
+        elif g2:
+            out.append(g2.groups()[0])
         else:
             pass
     out=sorted(out)
