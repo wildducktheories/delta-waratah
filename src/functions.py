@@ -417,36 +417,6 @@ def summary(df):
     gp1=derive_growth_params(slice)
     decay_rate1=gp1[1]
 
-    peak_cases_1 = peak_cases_projection(df.head(len(df)-1))
-    peak_cases_1_k = [k for k in peak_cases_1.keys()]
-
-    peak_cases = peak_cases_projection(df)
-
-    peak_cases_k = [k for k in peak_cases.keys()]
-
-    if len(peak_cases_1_k) >= 3 and len(peak_cases_k) >= 3:
-        peak=f"""
-    <h2>Peak Cases Projection *</h2>
-    <br/>
-    <pre>
-    Date: {peak_cases[peak_cases_k[1]]["date"]} {g(peak_cases[peak_cases_k[1]]["day"]-peak_cases_1[peak_cases_1_k[1]]["day"])} ({peak_cases[peak_cases_k[0]]["date"]} - {peak_cases[peak_cases_k[2]]["date"]})
-    Cases: {peak_cases[peak_cases_k[1]]["total"]} {g(peak_cases[peak_cases_k[1]]["total"]-peak_cases_1[peak_cases_1_k[1]]["total"])} ({peak_cases[peak_cases_k[0]]["total"]} - {peak_cases[peak_cases_k[2]]["total"]})
-    Decay Rate: {round(peak_cases[peak_cases_k[1]]["decay_rate"],2)}% {g(round(peak_cases[peak_cases_k[1]]["decay_rate"]-peak_cases_1[peak_cases_1_k[1]]["decay_rate"],2))} ({peak_cases[peak_cases_k[0]]["decay_rate"]}% - {peak_cases[peak_cases_k[2]]["decay_rate"]}%)
-    </pre>
-    <p><i>* The peak cases projection displayed here should be taken with a large grain of salt. It is highly sensitive to the
-    growth and decay rate estimates used and also to the (likely unsound) assumption that the decay rate will be roughly constant going forward.
-    An <a href="animated-new-cases.gif">animation</a> is available which illustrates how unstable this
-    projection is with time.</i>
-    </p>
-    """
-    else:
-        peak=f"""
-        <h2>Peak Cases Projection</h2>
-        <p>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sane peak case projections are not possible at this time.
-        </p>
-        """
-
     summary="""
     <style>
         span.good {
@@ -474,24 +444,97 @@ def summary(df):
     Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],2)}% per day {g(delta["ols-growth-rate"].values[0])}
     Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],2)}% per day {g(delta["linear-growth-rate"].values[0])}
     Reff: {round(df.tail(1)["Reff"].values[0],2)} {g(delta["Reff"].values[0])}
-    Reff-old: {round(df.tail(1)["Reff-old"].values[0],2)} {g(delta["Reff-old"].values[0])}
     Doubling Period:  {round(df.tail(1)["doubling-period"].values[0],1)} days {h(delta["doubling-period"].values[0])}
 
     Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
     ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
-    </pre>"""+peak+f"""<br/><br/>https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html"""
-
-    extra=f"""
-    <h2>More Info</h2>
-    <p>[1]</p>
-    <pre>
-    <dl>
-    <dt>[1]</dt><dd><a href="https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html">https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html</a></dd>
-    </dl>
-    </pre>
-"""
+    </pre>"""+f"""<br/><br/>https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html"""
 
     return summary
+
+def weekly_summary(df):
+    def percentage_delta(df):
+        shift=df.shift(7)
+        return np.round((df - shift)/shift*100,2)
+
+
+    def delta(df):
+        shift=df.shift(7)
+        return np.round((df - shift),3)
+
+    arrow=lambda v : "↑" if v > 0 else "↓" if v < 0 else "-"
+    f=lambda v: f"{arrow(v)}Δ {v}"
+    g=lambda v: f'<span class="good">{f(v)}</span>' if v < 0 else f'<span class="bad">{f(v)}</span>'
+    gg=lambda v: f'<span class="good">{v}</span>' if v < 0 else f'<span class="bad">{v}</span>'
+    h=lambda v: f'<span class="bad">{f(v)}</span>' if v < 0 else f'<span class="good">{f(v)}</span>'
+    hh=lambda v: f'<span class="bad">{v}</span>' if v < 0 else f'<span class="good">{v}</span>'
+
+    columns=[
+        "cumulative",
+        "total",
+        "correction",
+        "one-day-error",
+        "ols-growth-rate",
+        "ols-growth-rate-decay",
+        "doubling-period",
+        "Reff",
+        "ltlc-gradient",
+        "one-day-projection-total",
+        "linear-growth-rate"
+    ]
+
+    stats=df[columns].tail(1)
+    delta=delta(df[columns]).tail(1)
+    percentage_delta(df[columns]).tail(1)
+    delta_symbol=("Δ")
+
+    slice=df[(df.date >= '2021-07-02')]
+    gp0=derive_growth_params(slice[slice.index < slice.tail(8).head(1).index.values[0]])
+    decay_rate0=gp0[1]
+    gp1=derive_growth_params(slice)
+    decay_rate1=gp1[1]
+
+    projection=df.tail(8).head(1)["7-day-forward-projection-total"].values[0]
+    today=round(df.tail(1)["total"].values[0])
+    error=projection-today
+    relative_error=(projection-today)/today*100
+
+    summary="""
+    <style>
+        span.good {
+            color: green;
+        }
+        span.bad {
+            color: red;
+        }
+    </style>
+    """+f"""
+    <h1>Weekly Summary</h1>
+    <br/>
+    <p>Delta values are with respect to values from 1 week prior.</p>
+    </p>
+    <pre>
+    Date: {df.tail(1)['date'].values[0]} (#{df.tail(1).index.values[0]})
+
+    New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
+    Cumulative (since 2021-06-16): {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
+    Corrections (since 2021-06-16): {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}
+
+    Projection (from 7 days ago): {round(df.tail(8).head(1)["7-day-forward-projection-total"].values[0])}
+    Projection Error: {round(error)} ({hh(round(relative_error,1))}%)
+    Projection (for next week): {round(df.tail(1)["7-day-forward-projection-total"].values[0])}
+
+    Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],2)}% per day {g(delta["ols-growth-rate"].values[0])}
+    Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],2)}% per day {g(delta["linear-growth-rate"].values[0])}
+    Reff: {round(df.tail(1)["Reff"].values[0],2)} {g(delta["Reff"].values[0])}
+    Doubling Period:  {round(df.tail(1)["doubling-period"].values[0],1)} days {h(delta["doubling-period"].values[0])}
+
+    Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
+    ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
+    </pre>"""
+
+    return summary
+
 
 def plot_linear_growth(df):
     ax=df[["ols-growth-rate", 'linear-growth-rate', "linear-growth-rate-max", "linear-growth-rate-min", "linear-growth-rate-mean"]][df["linear-growth-rate-max"]<40].plot(figsize=(10,10))
