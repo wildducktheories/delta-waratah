@@ -452,7 +452,7 @@ def summary(df):
 
     return summary
 
-def weekly_summary(df):
+def weekly_summary(df, care_factor=1.0):
     def percentage_delta(df):
         shift=df.shift(7)
         return np.round((df - shift)/shift*100,2)
@@ -523,6 +523,8 @@ def weekly_summary(df):
     Projection (from 7 days ago): {round(df.tail(8).head(1)["7-day-forward-projection-total"].values[0])}
     Projection Error: {round(error)} ({hh(round(relative_error,1))}%)
     Projection (for next week): {round(df.tail(1)["7-day-forward-projection-total"].values[0])}
+
+    Care Factor: {round(care_factor,1)}
 
     Cumulative Growth Rate: {round(df.tail(1)["ols-growth-rate"].values[0],2)}% per day {g(delta["ols-growth-rate"].values[0])}
     Linear Growth Rate : {round(df.tail(1)["linear-growth-rate"].values[0],2)}% per day {g(delta["linear-growth-rate"].values[0])}
