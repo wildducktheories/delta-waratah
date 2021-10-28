@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from collections import OrderedDict
+from .functions import add_days
 
 pd.set_option('display.max_rows', None)
 
@@ -114,16 +115,29 @@ def parse_statistics_html(html, debug=False):
 
     return (total, cumulative, hospitalised, icu, ventilated, deaths)
 
-def load_nswhealth_stats():
+def load_statistics_json(date, stats):
+    date=stats.get("date", date)
+    total=stats.get("total")
+    cumulative=stats.get("cumulative_corrected")
+    hospitalised=stats.get("hospitalised")
+    icu=stats.get("icu")
+    ventilated=stats.get("ventilated")
+    deaths=stats.get("deaths")
+    if (type(icu) == tuple) or (icu is None):
+        icu=float("NaN")
+    return (date, total, cumulative, hospitalised, icu, ventilated, deaths)
+
+def load_nswhealth_stats(limit_date):
     out=[]
     index=load_index()
     for date in index:
         (total, cumulative, hospitalised, icu, ventilated, deaths)=parse_statistics_html(load_statistics(index[date], date))
+        json_file=f'archive/{date}/statistics.json'
         if total is None or cumulative is None:
-            json_file=f'archive/{date}/statistics.json'
             if not os.path.exists(json_file):
                 with open(json_file, "wb") as f:
                     f.write(json.dumps({
+                        "date": date,
                         "total": total,
                         "cumulative_corrected": cumulative,
                         "hospitalised": hospitalised,
@@ -131,19 +145,24 @@ def load_nswhealth_stats():
                         "ventilated": ventilated,
                         "deaths": deaths
                     }).encode('utf-8'))
-            with open(f'archive/{date}/statistics.json', "rb") as f:
-                stats=json.loads(f.read().decode("utf-8"))
-                total=stats.get("total")
-                cumulative=stats.get("cumulative_corrected")
-                hospitalised=stats.get("hospitalised")
-                icu=stats.get("icu"),
-                ventilated=stats.get("ventilated")
-                deaths=stats.get("deaths")
 
-                if type(icu) == tuple or icu is None:
-                    icu=float("NaN")
+
         out.append((date, total, cumulative, hospitalised, icu, ventilated, deaths))
-    df = pd.DataFrame(columns=['date', 'total',  'cumulative_corrected', 'hospitalised', 'icu', 'ventilated', 'deaths'], data=out)
+
+    dates=OrderedDict([(t[0],t) for t in out])
+
+    # scan all dates and override any missing with statistics.json
+    date='2021-06-16'
+    while date <= limit_date:
+        json_file=f'archive/{date}/statistics.json'
+        if os.path.exists(json_file):
+            with open(json_file, "rb") as f:
+                tmp = load_statistics_json(date, json.loads(f.read().decode("utf-8")))
+                dates[date] = tmp
+
+        date = add_days(date, 1)
+
+    df = pd.DataFrame(columns=['date', 'total',  'cumulative_corrected', 'hospitalised', 'icu', 'ventilated', 'deaths'], data=dates.values())
     df['cumulative'] = df['total'].cumsum()
     df['correction'] = df['cumulative_corrected'] - df['cumulative']
     return df
