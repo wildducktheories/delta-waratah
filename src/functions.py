@@ -546,7 +546,7 @@ def weekly_summary(df, care_factor=1.0):
 
     Growth Decay Rate: {round(decay_rate1, 2)}% per day {g(round(decay_rate1 - decay_rate0, 2))}
     ln-ln Gradient: {round(df.tail(1)["ltlc-gradient"].values[0], 3)} {g(round(delta["ltlc-gradient"].values[0], 3))}
-    </pre>"""
+    </pre>"""+f"""<br/><br/>https://jonseymour.s3.amazonaws.com/delta-waratah/archive/{df.tail(1)['date'].values[0]}/sydney-outbreaks.html"""
 
     return summary
 
