@@ -151,8 +151,8 @@ def load_nswhealth_stats(limit_date):
                         "deaths": deaths
                     }).encode('utf-8'))
 
-
-        out.append((date, total, cumulative, hospitalised, icu, ventilated, deaths))
+        if date <= limit_date:
+            out.append((date, total, cumulative, hospitalised, icu, ventilated, deaths))
 
     dates=OrderedDict([(t[0],t) for t in out])
 
