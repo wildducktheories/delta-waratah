@@ -417,6 +417,12 @@ def summary(df):
     gp1=derive_growth_params(slice)
     decay_rate1=gp1[1]
 
+    if float(df.tail(1)["correction"].values[0]) == df.tail(1)["correction"].values[0]:
+#        corrections = f"Corrections (since 2021-06-16): {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}"
+        pass
+    else:
+        corrections = f"Corrections not available on this day."
+
     summary="""
     <style>
         span.good {
@@ -434,7 +440,7 @@ def summary(df):
 
     New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
     Cumulative (since 2021-06-16): {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
-    Corrections (since 2021-06-16): {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}
+    {corrections}
 
     Projection (from yesterday): {round(df.tail(2).head(1)["one-day-projection-total"].values[0])}
     Projection Error: {round(df.tail(1)["one-day-error"].values[0])} ({hh(round(df.tail(1)["one-day-relative-error"].values[0],1))}%)
@@ -499,6 +505,13 @@ def weekly_summary(df, care_factor=1.0):
     error=projection-today
     relative_error=(projection-today)/today*100
 
+    if float(df.tail(1)["correction"].values[0]) == df.tail(1)["correction"].values[0]:
+#        corrections = f"Corrections (since 2021-06-16): {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}"
+        pass
+    else:
+        corrections = f"Corrections not available on this day."
+
+
     summary="""
     <style>
         span.good {
@@ -518,7 +531,7 @@ def weekly_summary(df, care_factor=1.0):
 
     New Cases Reported Today: {round(df.tail(1)["total"].values[0])} {g(delta["total"].values[0])}
     Cumulative (since 2021-06-16): {round(df.tail(1)["cumulative"].values[0])} {f(delta["cumulative"].values[0])}
-    Corrections (since 2021-06-16): {round(df.tail(1)["correction"].values[0])} {f(delta["correction"].values[0])}
+    {corrections}
 
     Projection (from 7 days ago): {round(df.tail(8).head(1)["7-day-forward-projection-total"].values[0])}
     Projection Error: {round(error)} ({hh(round(relative_error,1))}%)
