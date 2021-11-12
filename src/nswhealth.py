@@ -71,6 +71,7 @@ def parse_statistics_html(html, debug=False):
     pattern_deaths_3=re.compile(".*This brings to ([\d,]*) the number of COVID-related deaths")
     pattern_deaths_4=re.compile(".*The number of COVID-related deaths during the current outbreak is now ([\d,]*)")
     pattern_deaths_5=re.compile(".*NSW has recorded ([\d,]*) COVID-19 related deaths since 16 June 2021")
+    pattern_deaths_6=re.compile(".*Deaths \\(in NSW from confirmed cases\\).*<td[^>]*> *([\d,]+).*Total tests")
     total=None
     cumulative=None
     hospitalised=None
@@ -117,6 +118,11 @@ def parse_statistics_html(html, debug=False):
         g=pattern_deaths_5.match(c)
         if g:
             deaths=int(g.groups()[0].replace(",", ""))
+
+        g=pattern_deaths_6.match(c)
+        if g:
+            # print(g.groups()[0], int(g.groups()[0]))
+            deaths=int(g.groups()[0].replace(",", ""))-56 # total deaths - 56
 
     return (total, cumulative, hospitalised, icu, ventilated, deaths)
 
