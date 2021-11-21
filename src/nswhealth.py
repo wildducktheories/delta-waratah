@@ -64,6 +64,8 @@ def parse_statistics_html(html, debug=False):
     pattern_obsfucate=re.compile("^(.*)<span[^>]*>(.*)</span>(.*)")
     pattern_cumulative=re.compile("^.*There have been ([\d,]*) locally acquired cases reported since 16 June 2021")
     pattern=re.compile("^.*NSW recorded ([^ ]*) .*locally acquired cases of COVID-19")
+    pattern_2=re.compile("^.*NSW recorded ([\d,]*) new cases of COVID-19 in the 24 hours to 8pm last night.")
+
     pattern_partial=re.compile("^.*NSW recorded")
     pattern_health=re.compile(".*There are currently ([\d,]*) COVID-19 cases admitted to hospital, with ([\d,]*) people in intensive care, (.*) of whom require ventilation.")
     pattern_deaths=re.compile(".*There have been ([\d,]*) COVID.*related deaths")
@@ -93,8 +95,12 @@ def parse_statistics_html(html, debug=False):
             if g:
                 total=int(g.groups()[0].replace(",",""))
             else: 
-                if debug:
-                    print(c)
+                g = pattern_2.match(c)
+                if g:
+                    total=int(g.groups()[0].replace(",",""))
+                else:
+                    if debug:
+                        print(c)
         g=pattern_health.match(c)
         if g:
             hospitalised,icu,ventilated=[int(v.replace(',', '')) for v in g.groups()]
